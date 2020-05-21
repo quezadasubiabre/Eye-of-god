@@ -130,4 +130,8 @@ dmypy.json
 
 #folders
 /videos/*
+<<<<<<< HEAD
 /output/*
+=======
+/output/*
+>>>>>>> 3bfcc1b661fa6214befd461997ebe9d6d00e89e7
