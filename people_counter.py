@@ -21,6 +21,10 @@ import time
 import dlib
 import cv2
 
+def dist(p1, p2):
+	(x1, y1), (x2, y2) = p1, p2
+	return np.sqrt((x2 - x1)**2 + (y2 - y1)**2)
+
 # construct the argument parse and parse the arguments
 ap = argparse.ArgumentParser()
 ap.add_argument("-p", "--prototxt", required=True,
@@ -239,6 +243,14 @@ while True:
 
 		# store the trackable object in our dictionary
 		trackableObjects[objectID] = to
+		from itertools import combinations
+		values = objects.values() 
+		for p1, p2 in combinations(values, 2):
+			if  dist(p1, p2) < 200:
+				print(p1,'Cerca de ', p2)	
+				cv2.line(new_frame, (p1[0],p1[1]), (p2[0],p2[1]), (0, 255, 255), 2)
+
+
 
 		# draw both the ID of the object and the centroid of the
 		# object on the output frame
