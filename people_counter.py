@@ -100,11 +100,12 @@ while True:
 	# the frame from BGR to RGB for dlib
 	frame = imutils.resize(frame, width=500)
 	rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-
+	
 	# if the frame dimensions are empty, set them
 	if W is None or H is None:
 		(H, W) = frame.shape[:2]
 
+	new_frame = np.zeros([H,W,3],dtype=np.uint8)
 	# if we are supposed to be writing a video to disk, initialize
 	# the writer
 	if args["output"] is not None and writer is None:
@@ -201,6 +202,10 @@ while True:
 		# object ID
 		to = trackableObjects.get(objectID, None)
 
+		(x,y) = centroid
+
+		print(objects)
+
 		# if there is no existing trackable object, create one
 		if to is None:
 			to = TrackableObject(objectID, centroid)
@@ -241,6 +246,7 @@ while True:
 		cv2.putText(frame, text, (centroid[0] - 10, centroid[1] - 10),
 			cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 		cv2.circle(frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
+		cv2.circle(new_frame, (centroid[0], centroid[1]), 4, (0, 255, 0), -1)
 
 	# construct a tuple of information we will be displaying on the
 	# frame
@@ -249,19 +255,21 @@ while True:
 		("Down", totalDown),
 		("Status", status),
 	]
-
+	
 	# loop over the info tuples and draw them on our frame
 	for (i, (k, v)) in enumerate(info):
 		text = "{}: {}".format(k, v)
 		cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
 			cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+		cv2.putText(new_frame, text, (10, H - ((i * 20) + 20)),
+			cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
 	# check to see if we should write the frame to disk
 	if writer is not None:
-		writer.write(frame)
+		writer.write(new_frame)
 
 	# show the output frame
-	cv2.imshow("Frame", frame)
+	cv2.imshow("Frame", new_frame)
 	key = cv2.waitKey(1) & 0xFF
 
 	# if the `q` key was pressed, break from the loop
