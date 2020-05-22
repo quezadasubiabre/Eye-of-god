@@ -2,7 +2,7 @@
 # To read and write back out to video:
 # python people_counter.py --prototxt mobilenet_ssd/MobileNetSSD_deploy.prototxt \
 #	--model mobilenet_ssd/MobileNetSSD_deploy.caffemodel --input videos/example_01.mp4 \
-#	--output output/output_01.avi
+#	--output output/output_01_eye.avi --output1 output/output_01.avi
 #
 # To read from webcam and write back out to disk:
 # python people_counter.py --prototxt mobilenet_ssd/MobileNetSSD_deploy.prototxt \
@@ -14,6 +14,7 @@ from pyimagesearch.centroidtracker import CentroidTracker
 from pyimagesearch.trackableobject import TrackableObject
 from imutils.video import VideoStream
 from imutils.video import FPS
+from itertools import combinations
 import numpy as np
 import argparse
 import imutils
@@ -34,6 +35,8 @@ ap.add_argument("-m", "--model", required=True,
 ap.add_argument("-i", "--input", type=str,
 	help="path to optional input video file")
 ap.add_argument("-o", "--output", type=str,
+	help="path to optional output video file")
+ap.add_argument("-o1", "--output1", type=str,
 	help="path to optional output video file")
 ap.add_argument("-c", "--confidence", type=float, default=0.4,
 	help="minimum probability to filter weak detections")
@@ -65,7 +68,6 @@ else:
 
 # initialize the video writer (we'll instantiate later if need be)
 writer = None
-
 # initialize the frame dimensions (we'll set them as soon as we read
 # the first frame from the video)
 W = None
@@ -115,6 +117,8 @@ while True:
 	if args["output"] is not None and writer is None:
 		fourcc = cv2.VideoWriter_fourcc(*"MJPG")
 		writer = cv2.VideoWriter(args["output"], fourcc, 30,
+			(W, H), True)
+		writer1 = cv2.VideoWriter(args["output1"], fourcc, 30,
 			(W, H), True)
 
 	# initialize the current status along with our list of bounding
@@ -194,7 +198,7 @@ while True:
 	# draw a horizontal line in the center of the frame -- once an
 	# object crosses this line we will determine whether they were
 	# moving 'up' or 'down'
-	cv2.line(frame, (0, H // 2), (W, H // 2), (0, 255, 255), 2)
+	#cv2.line(frame, (0, H // 2), (W, H // 2), (0, 255, 255), 2)
 
 	# use the centroid tracker to associate the (1) old object
 	# centroids with (2) the newly computed object centroids
@@ -205,10 +209,6 @@ while True:
 		# check to see if a trackable object exists for the current
 		# object ID
 		to = trackableObjects.get(objectID, None)
-
-		(x,y) = centroid
-
-		print(objects)
 
 		# if there is no existing trackable object, create one
 		if to is None:
@@ -243,12 +243,12 @@ while True:
 
 		# store the trackable object in our dictionary
 		trackableObjects[objectID] = to
-		from itertools import combinations
+		
 		values = objects.values() 
 		for p1, p2 in combinations(values, 2):
-			if  dist(p1, p2) < 200:
-				print(p1,'Cerca de ', p2)	
+			if  dist(p1, p2) < 200:					
 				cv2.line(new_frame, (p1[0],p1[1]), (p2[0],p2[1]), (0, 255, 255), 2)
+				cv2.putText(new_frame, 'WARNING', (10, H - ((0 * 20) + 20)),cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
 
 
@@ -262,23 +262,24 @@ while True:
 
 	# construct a tuple of information we will be displaying on the
 	# frame
-	info = [
-		("Up", totalUp),
-		("Down", totalDown),
-		("Status", status),
-	]
+	#info = [
+	#	("Up", totalUp),
+	#	("Down", totalDown),
+	#	("Status", status),
+	#]
 	
 	# loop over the info tuples and draw them on our frame
-	for (i, (k, v)) in enumerate(info):
-		text = "{}: {}".format(k, v)
-		cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
-		cv2.putText(new_frame, text, (10, H - ((i * 20) + 20)),
-			cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+	#for (i, (k, v)) in enumerate(info):
+	#	text = "{}: {}".format(k, v)
+	#	cv2.putText(frame, text, (10, H - ((i * 20) + 20)),
+	#		cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
+	#	cv2.putText(new_frame, text, (10, H - ((i * 20) + 20)),
+	#		cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 0, 255), 2)
 
 	# check to see if we should write the frame to disk
 	if writer is not None:
 		writer.write(new_frame)
+		writer1.write(frame)
 
 	# show the output frame
 	cv2.imshow("Frame", new_frame)
@@ -301,6 +302,7 @@ print("[INFO] approx. FPS: {:.2f}".format(fps.fps()))
 # check to see if we need to release the video writer pointer
 if writer is not None:
 	writer.release()
+	writer1.release()
 
 # if we are not using a video file, stop the camera video stream
 if not args.get("input", False):
