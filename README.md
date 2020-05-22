@@ -6,3 +6,4 @@ Based on this tutorial https://www.pyimagesearch.com/2018/08/13/opencv-people-co
 ![](people.gif)
 
 
+The video is also a resource from pyimagesearch.com
